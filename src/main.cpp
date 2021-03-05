@@ -1,24 +1,26 @@
-/*
-BABY QUBE
-*/
-#include "Arduino.h"
-#include "namedMesh.h"
+#if defined(RELEASE_CODE)
+    /*
+    BABY QUBE
+    */
+    #include "Arduino.h"
+    #include "namedMesh.h"
+    #include <EEPROM.h>
+    #include "ArduinoJson.h"
 
-#include "ArduinoJson.h"
+    #include "storage.h"
 
-
-#define MESH_PREFIX "whateverYouLike"
-#define MESH_PASSWORD "somethingSneaky"
-#define MESH_PORT 5555
+    #define MESH_PREFIX "whateverYouLike"
+    #define MESH_PASSWORD "somethingSneaky"
+    #define MESH_PORT 5555
 
 Scheduler userScheduler;  // to control your personal task
 namedMesh mesh;
-String this_node_name = "switch-qube-1";
 int switch_pin_state = HIGH;
 
-/* User defined variables */
-#define RELAY_PIN 2
-#define SWITCH_PIN 5  // This is D1 on Node MCU board
+    /* User defined variables */
+    #define RELAY_PIN 2
+    #define SWITCH_PIN 5  // This is D1 on Node MCU board
+
 
 void sendMessage() {
     // String msg = "Hello from node 2";
@@ -31,33 +33,33 @@ void sendMessage() {
 Task taskSendMessage(TASK_SECOND * 1, TASK_FOREVER, &sendMessage);
 
 void switch_pin_watcher() {
-  int current_state = digitalRead(SWITCH_PIN);
-  // Serial.printf("Switch state was changed to -> %d\n", current_state);
-  if(current_state != switch_pin_state) {
+    int current_state = digitalRead(SWITCH_PIN);
+    // Serial.printf("Switch state was changed to -> %d\n", current_state);
+    if (current_state != switch_pin_state) {
+        // Set the relay to whatever state the switch desires
+        // Since the pin is INPUT_PULLUP. So,
+        // Switch OPEN / OFF = HIGH
+        // Switch CLOSE / ON = GND
+        int relay_state = (current_state ? LOW : HIGH);
+        Serial.printf("Physical switch says put relay to -> %d\n", relay_state);
+        digitalWrite(RELAY_PIN, relay_state);
 
-    // Set the relay to whatever state the switch desires
-    // Since the pin is INPUT_PULLUP. So,
-    // Switch OPEN / OFF = HIGH
-    // Switch CLOSE / ON = GND
-    int relay_state = (current_state ? LOW : HIGH);
-    Serial.printf("Physical switch says put relay to -> %d\n", relay_state);
-    digitalWrite(RELAY_PIN, relay_state);
+        // Create a message and send it to master
+        StaticJsonDocument<50> doc;
+        String doc_string;
+        String to_node = "master";
 
-    // Create a message and send it to master
-    StaticJsonDocument<50> doc;
-    String doc_string;
-    String to_node = "master";
+        doc["t"] = 1;
+        doc["ss"] = current_state;
+        doc["rs"] = current_state;
+        serializeJson(doc, doc_string);
+        mesh.sendSingle(to_node, doc_string);
 
-    doc["t"] = 1;
-    doc["ss"] = current_state;
-    doc["rs"] = current_state;
-    serializeJson(doc, doc_string);
-    mesh.sendSingle(to_node, doc_string);
-
-    switch_pin_state = current_state;
-  }
+        switch_pin_state = current_state;
+    }
 }
-Task switch_pin_watcher_task(500ul, TASK_FOREVER, &switch_pin_watcher); // Execute this task every 500ms
+Task switch_pin_watcher_task(
+    500ul, TASK_FOREVER, &switch_pin_watcher);  // Execute this task every 500ms
 
 // Needed for painless library
 void receivedCallback(uint32_t from, String &msg) {
@@ -97,13 +99,11 @@ void nodeTimeAdjustedCallback(int32_t offset) {
                   offset);
 }
 
-
-void handleInterrupt() { 
-    Serial.println("Interrupt Detected"); 
-}
+void handleInterrupt() { Serial.println("Interrupt Detected"); }
 
 void setup() {
     Serial.begin(115200);
+    EEPROM.begin(512);
 
     // mesh.setDebugMsgTypes( ERROR | MESH_STATUS | CONNECTION | SYNC |
     // COMMUNICATION | GENERAL | MSG_TYPES | REMOTE ); // all types on
@@ -113,7 +113,6 @@ void setup() {
     Serial.println("Mesh debug type set");
 
     mesh.init(MESH_PREFIX, MESH_PASSWORD, &userScheduler, MESH_PORT);
-    mesh.setName(this_node_name);
     mesh.onReceive(&receivedCallback);
     mesh.onNewConnection(&newConnectionCallback);
     mesh.onChangedConnections(&changedConnectionCallback);
@@ -135,6 +134,18 @@ void setup() {
     userScheduler.addTask(switch_pin_watcher_task);
     switch_pin_watcher_task.enable();
 
+    // Fetch Relay state from storage
+    int relay_state_from_storage = 0;
+    storage::getRelayStatus(&relay_state_from_storage);
+    Serial.printf("Relay state as per storage -> %d\n", relay_state_from_storage);
+    digitalWrite(RELAY_PIN, relay_state_from_storage);
+
+    // Fetch Device ID from storage
+    char dev_id[20] = "";
+    storage::getDeviceID(dev_id);
+    Serial.printf("Device ID from storage is -> %s\n", dev_id);
+    String this_node_name(dev_id);
+    mesh.setName(this_node_name);
     Serial.println("Setup() complete");
 }
 
@@ -142,3 +153,5 @@ void loop() {
     // it will run the user scheduler as well
     mesh.update();
 }
+
+#endif

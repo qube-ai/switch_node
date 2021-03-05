@@ -1,39 +1,34 @@
 #if defined(INIT_EEPROM)
 
-    #include <Arduino.h>
-    #include <EEPROM.h>
+#include <Arduino.h>
+#include "storage.h"
 
-    #define EEPROM_INIT_CHECK_ADDR 0
-    #define RELAY_STATE_ADDR 1
-    #define DEVICE_ID_ADDR_START 2
-    #define DEVICE_ID "switch-qube-1"
-    #define DEVICE_ID_ADDR_END 22
-
-
-void setup() {
+void setup()
+{
     Serial.begin(115200);
     delay(100);
 
-    EEPROM.begin(512);
-    Serial.println("EEPROM initialized");
+    storage::init();
 
-    // Default Relay State
-    EEPROM.write(RELAY_STATE_ADDR, 1);
-    Serial.println("Default relay state written");
+    storage::setDeviceID("switch-qube-1");
+    storage::setRelayStatus(1);
 
-    // Name of the device
-    String sample = DEVICE_ID;
-    for (int i = DEVICE_ID_ADDR_START; i < sample.length(); i++) {
-        EEPROM.write(i, sample[i]);
-    }
+    char device_id[32] = "";
+    storage::getDeviceID(device_id);
+    Serial.print("Device ID = ");
+    Serial.println(device_id);
 
-    // EEPROM init complete
-    EEPROM.write(EEPROM_INIT_CHECK_ADDR, 1);
+    int relay_status = 0;
+    storage::getRelayStatus(&relay_status);
+    Serial.print("Relay Status = ");
+    Serial.println(relay_status);
 
-    EEPROM.commit();
-    Serial.println("EEPROM INIT complete.");
+    Serial.println("END OF EEPROM INITIALIZATION");
 }
 
-void loop() {}
+void loop()
+{
+
+}
 
 #endif
