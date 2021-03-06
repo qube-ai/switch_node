@@ -19,7 +19,7 @@ int switch_pin_state = HIGH;
 
     /* User defined variables */
     #define RELAY_PIN 2
-    #define SWITCH_PIN 5  // This is D1 on Node MCU board
+    #define SWITCH_PIN 0  // This is D1 on Node MCU board
 
 
 void sendMessage() {
@@ -42,6 +42,7 @@ void switch_pin_watcher() {
         // Switch CLOSE / ON = GND
         int relay_state = (current_state ? LOW : HIGH);
         Serial.printf("Physical switch says put relay to -> %d\n", relay_state);
+        storage::setRelayStatus(relay_state);
         digitalWrite(RELAY_PIN, relay_state);
 
         // Create a message and send it to master
@@ -80,6 +81,7 @@ void receivedCallback(uint32_t from, String &msg) {
     if (type == 2) {
         short relay_state = doc["rs"];
         Serial.printf("Gateway says to put relay to -> %d\n", relay_state);
+        storage::setRelayStatus(relay_state);
         digitalWrite(RELAY_PIN, (relay_state ? HIGH : LOW));
     }
 
@@ -118,6 +120,7 @@ void setup() {
     mesh.onChangedConnections(&changedConnectionCallback);
     mesh.onNodeTimeAdjusted(&nodeTimeAdjustedCallback);
     Serial.println("Mesh properties set");
+    Serial.printf("Mesh properties set for ssid -> %s and pass -> %s\n", MESH_PREFIX, MESH_PASSWORD);
 
     // Get the Master Node ID
     userScheduler.addTask(taskSendMessage);
