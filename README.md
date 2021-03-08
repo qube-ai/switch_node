@@ -5,6 +5,8 @@
   1. Changing Mesh name and password. Otherwise homes that are side by side will share the data automatically. Which is wrong. We need to create unique mesh names and passwords
   2. Ability to change the priority of physical switch or cloud message.
   3. Add ability to perform an OTA update from master.
+  4. Change GPIO0 to TX and GPIO2 to RX
+  5. Implement software serial on GPIO0 and GPIO2 with preprocessor definitions to remove serial statements from release code. (Create a release build and a debug build).
 
 ## Getting Started
 
@@ -45,6 +47,19 @@ To reset the ESP, connect `RST` to gronud for a brief moment. The chip will auto
     {
       "t": 2,   -> 't' stands for type of message
       "rs": 0,  -> Relay would be set to this state (1 - ON, 0 - Off)
+    }
+    ```
+
+  - **TODO : Type 3 (Master -> Node)** : Change priority between cloud and physical switch. The priority is as follows:
+    - `0` : Follow physical swtich (ignore cloud)
+    - `1` : Follow physical switch byut also accept cloud commands
+    - `2` : Ignore physical switch but accept cloud commands
+    - `3` : Ignore physical switch and cloud commands
+   Example message
+    ```
+    {
+      "t": 3,   -> 't' stands for type of message
+      "p": 0,  -> The priority in which the device should exist
     }
     ```
 
