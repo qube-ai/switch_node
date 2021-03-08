@@ -22,3 +22,7 @@
 ![Programming ESP01](media/programming-esp01.png)
 
 To reset the ESP, connect `RST` to gronud for a brief moment. The chip will automatically restart.
+
+## Debugging
+
+  - **If the board keeps restarting without any reason.** -> Power ESP01 using a dedicated power supply. Use FTDI power supply **ONLY** for programming the board and for nothing else. If you use FTDI's power supply it would keep restarting with some error random error every now and then.
