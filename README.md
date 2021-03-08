@@ -1,5 +1,11 @@
 # Baby Qube
 
+## TODO
+
+  1. Changing Mesh name and password. Otherwise homes that are side by side will share the data automatically. Which is wrong. We need to create unique mesh names and passwords
+  2. Ability to change the priority of physical switch or cloud message.
+  3. Add ability to perform an OTA update from master.
+
 ## Getting Started
 
   - Clone the project
@@ -22,6 +28,25 @@
 ![Programming ESP01](media/programming-esp01.png)
 
 To reset the ESP, connect `RST` to gronud for a brief moment. The chip will automatically restart.
+
+## Message Types
+
+  - **Type 1 (Node -> Master)** : Whenever the state of node changes. The device generates the message and sends it to the master. Example message:
+    ```
+    {
+      "t": 1,   -> 't' stands for type of message
+      "rs": 1,  -> 'rs' stands for relay state (1 - ON, 0 - Off)
+      "ss": 0   -> 'ss' starnds for switch state (1 - ON, 0 - Off)
+    }
+    ```
+
+  - **Type 2 (Master -> Node)** : When master instructs to change the state of relay in a baby qube. Example message
+    ```
+    {
+      "t": 2,   -> 't' stands for type of message
+      "rs": 0,  -> Relay would be set to this state (1 - ON, 0 - Off)
+    }
+    ```
 
 ## Debugging
 
