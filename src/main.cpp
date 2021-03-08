@@ -1,7 +1,4 @@
 #if defined(RELEASE_CODE)
-    /*
-    BABY QUBE
-    */
     #include "Arduino.h"
     #include "namedMesh.h"
     #include <EEPROM.h>
@@ -13,28 +10,19 @@
     #define MESH_PASSWORD "somethingSneaky"
     #define MESH_PORT 5555
 
-Scheduler userScheduler;  // to control your personal task
-namedMesh mesh;
-int switch_pin_state = HIGH;
-
-    /* User defined variables */
+    /* GPIO pins in use */
     #define RELAY_PIN 2
-    #define SWITCH_PIN 0  // This is D1 on Node MCU board
+    #define SWITCH_PIN 0 
 
-
-void sendMessage() {
-    // String msg = "Hello from node 2";
-    // String to_node = "master";
-
-    // msg += mesh.getNodeId();
-    // mesh.sendSingle(to_node, msg);
-    // taskSendMessage.setInterval(random(TASK_SECOND * 1, TASK_SECOND * 5));
-}
-Task taskSendMessage(TASK_SECOND * 1, TASK_FOREVER, &sendMessage);
+    Scheduler userScheduler;
+    namedMesh mesh;
+    int switch_pin_state = HIGH; 
 
 void switch_pin_watcher() {
+    // Get the current state of switch pin
     int current_state = digitalRead(SWITCH_PIN);
-    // Serial.printf("Switch state was changed to -> %d\n", current_state);
+
+    // Compare current state with last known state to see if it has changed
     if (current_state != switch_pin_state) {
         // Set the relay to whatever state the switch desires
         // Since the pin is INPUT_PULLUP. So,
@@ -59,8 +47,8 @@ void switch_pin_watcher() {
         switch_pin_state = current_state;
     }
 }
-Task switch_pin_watcher_task(
-    500ul, TASK_FOREVER, &switch_pin_watcher);  // Execute this task every 500ms
+// Execute this task every 500ms
+Task switch_pin_watcher_task(500ul, TASK_FOREVER, &switch_pin_watcher);  
 
 // Needed for painless library
 void receivedCallback(uint32_t from, String &msg) {
@@ -109,9 +97,8 @@ void setup() {
 
     // mesh.setDebugMsgTypes( ERROR | MESH_STATUS | CONNECTION | SYNC |
     // COMMUNICATION | GENERAL | MSG_TYPES | REMOTE ); // all types on
-    mesh.setDebugMsgTypes(
-        ERROR |
-        STARTUP);  // set before init() so that you can see startup messages
+    // set before init() so that you can see startup messages
+    mesh.setDebugMsgTypes(ERROR | STARTUP);
     Serial.println("Mesh debug type set");
 
     mesh.init(MESH_PREFIX, MESH_PASSWORD, &userScheduler, MESH_PORT);
@@ -122,20 +109,14 @@ void setup() {
     Serial.println("Mesh properties set");
     Serial.printf("Mesh properties set for ssid -> %s and pass -> %s\n", MESH_PREFIX, MESH_PASSWORD);
 
-    // Get the Master Node ID
-    userScheduler.addTask(taskSendMessage);
-    taskSendMessage.enable();
+    // Add a task for watching the GPIO pins
+    userScheduler.addTask(switch_pin_watcher_task);
+    switch_pin_watcher_task.enable();
 
-    // userScheduler.addTask( get_master_node_id_task );
-    // get_master_node_id_task.enable();
-
-    // Perform GPIO setup
+    // Setup GPIO pins
     pinMode(RELAY_PIN, OUTPUT);
     pinMode(SWITCH_PIN, INPUT_PULLUP);
     switch_pin_state = digitalRead(SWITCH_PIN);
-
-    userScheduler.addTask(switch_pin_watcher_task);
-    switch_pin_watcher_task.enable();
 
     // Fetch Relay state from storage
     int relay_state_from_storage = 0;
@@ -143,12 +124,14 @@ void setup() {
     Serial.printf("Relay state as per storage -> %d\n", relay_state_from_storage);
     digitalWrite(RELAY_PIN, relay_state_from_storage);
 
-    // Fetch Device ID from storage
+    // Set node name from storage 
     char dev_id[20] = "";
     storage::getDeviceID(dev_id);
     Serial.printf("Device ID from storage is -> %s\n", dev_id);
     String this_node_name(dev_id);
     mesh.setName(this_node_name);
+
+
     Serial.println("Setup() complete");
 }
 
