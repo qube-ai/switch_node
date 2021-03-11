@@ -30,6 +30,8 @@
 ![Programming ESP01](media/programming-esp01.png)
 
 To reset the ESP, connect `RST` to gronud for a brief moment. The chip will automatically restart.
+Tx - GPIO 1
+Rx - GPIO 3
 
 ## Message Types
 
