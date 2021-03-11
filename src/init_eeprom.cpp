@@ -11,7 +11,8 @@ void setup()
     storage::init();
 
     storage::setDeviceID("switch-qube-1");
-    storage::setRelayStatus(1);
+    storage::setRelayStatus(0); // By default the appliance would be off
+    storage::setPriority(1);    // Follow switch and also listen to cloud messages
 
     char device_id[32] = "";
     storage::getDeviceID(device_id);
@@ -22,6 +23,11 @@ void setup()
     storage::getRelayStatus(&relay_status);
     Serial.print("Relay Status = ");
     Serial.println(relay_status);
+
+    int p = 0;
+    storage::getPriority(&p);
+    Serial.print("Priority = ");
+    Serial.println(p);
 
     Serial.println("END OF EEPROM INITIALIZATION");
 }
