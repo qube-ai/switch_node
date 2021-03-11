@@ -39,7 +39,16 @@ void switch_pin_watcher() {
         int relay_state = (current_state ? LOW : HIGH);
         debugSerial.printf("Physical switch says put relay to -> %d\n", relay_state);
         storage::setRelayStatus(relay_state);
-        actuateRelay(relay_state);
+
+        // Physical switch is state change is accepted only in priority 0 and 1, ignore everything else
+        int priority = 0;
+        storage::getPriority(&priority);
+        if(priority == 0 || priority == 1) {
+            actuateRelay(relay_state);
+        }
+        else {
+            debugSerial.printf("Current priority(%d) doesn't allow for relay state change.\n", priority);
+        }
 
         // Create a message and send it to master
         StaticJsonDocument<50> doc;
@@ -78,7 +87,17 @@ void receivedCallback(uint32_t from, String &msg) {
         short relay_state = doc["rs"];
         debugSerial.printf("Gateway says to put relay to -> %d\n", relay_state);
         storage::setRelayStatus(relay_state);
-        actuateRelay(relay_state);
+
+        // Cloud commands are only accepted in priority 1 and 2, ignore everything else
+        int priority = 0;
+        storage::getPriority(&priority);
+        if(priority == 1 || priority == 2) {
+            actuateRelay(relay_state);
+        }
+        else {
+            debugSerial.printf("Current priority(%d) doesn't allow for relay state change.\n", priority);
+        }
+        
     }
 
     else {
