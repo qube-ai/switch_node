@@ -5,18 +5,26 @@
     #include "ArduinoJson.h"
 
     #include "storage.h"
+    #include <SoftwareSerial.h>
 
     #define MESH_PREFIX "whateverYouLike"
     #define MESH_PASSWORD "somethingSneaky"
     #define MESH_PORT 5555
 
     /* GPIO pins in use */
-    #define RELAY_PIN 2
-    #define SWITCH_PIN 0 
+    #define RELAY_PIN 1  // Tx pin
+    #define SWITCH_PIN 3  // Rx pin
 
     Scheduler userScheduler;
     namedMesh mesh;
     int switch_pin_state = HIGH; 
+    SoftwareSerial debugSerial(0, 2); // 0 - Rx, 2 - Tx
+
+inline void actuateRelay(short value) {
+    // Relay is active low
+    digitalWrite(RELAY_PIN, value);
+}
+
 
 void switch_pin_watcher() {
     // Get the current state of switch pin
@@ -29,9 +37,9 @@ void switch_pin_watcher() {
         // Switch OPEN / OFF = HIGH
         // Switch CLOSE / ON = GND
         int relay_state = (current_state ? LOW : HIGH);
-        Serial.printf("Physical switch says put relay to -> %d\n", relay_state);
+        debugSerial.printf("Physical switch says put relay to -> %d\n", relay_state);
         storage::setRelayStatus(relay_state);
-        digitalWrite(RELAY_PIN, relay_state);
+        actuateRelay(relay_state);
 
         // Create a message and send it to master
         StaticJsonDocument<50> doc;
@@ -52,13 +60,13 @@ Task switch_pin_watcher_task(500ul, TASK_FOREVER, &switch_pin_watcher);
 
 // Needed for painless library
 void receivedCallback(uint32_t from, String &msg) {
-    Serial.printf("Received from %u msg=%s\n", from, msg.c_str());
+    debugSerial.printf("Received from %u msg=%s\n", from, msg.c_str());
 
     StaticJsonDocument<100> doc;
     DeserializationError error = deserializeJson(doc, msg);
     if (error) {
-        Serial.print(F("deserializeJson() failed: "));
-        Serial.println(error.f_str());
+        debugSerial.print(F("deserializeJson() failed: "));
+        debugSerial.println(error.f_str());
         return;
     }
 
@@ -68,71 +76,76 @@ void receivedCallback(uint32_t from, String &msg) {
     // Update relay state
     if (type == 2) {
         short relay_state = doc["rs"];
-        Serial.printf("Gateway says to put relay to -> %d\n", relay_state);
+        debugSerial.printf("Gateway says to put relay to -> %d\n", relay_state);
         storage::setRelayStatus(relay_state);
-        digitalWrite(RELAY_PIN, (relay_state ? HIGH : LOW));
+        actuateRelay(relay_state);
     }
 
     else {
-        Serial.println("Unknown type of message received.");
+        debugSerial.println("Unknown type of message received.");
     }
 }
 
 void newConnectionCallback(uint32_t nodeId) {
-    Serial.printf("--> startHere: New Connection, nodeId = %u\n", nodeId);
+    debugSerial.printf("--> startHere: New Connection, nodeId = %u\n", nodeId);
 }
 
-void changedConnectionCallback() { Serial.printf("Changed connections\n"); }
+void changedConnectionCallback() { debugSerial.printf("Changed connections\n"); }
 
 void nodeTimeAdjustedCallback(int32_t offset) {
-    Serial.printf("Adjusted time %u. Offset = %d\n", mesh.getNodeTime(),
+    debugSerial.printf("Adjusted time %u. Offset = %d\n", mesh.getNodeTime(),
                   offset);
 }
 
-void handleInterrupt() { Serial.println("Interrupt Detected"); }
+void handleInterrupt() { debugSerial.println("Interrupt Detected"); }
 
 void setup() {
-    Serial.begin(115200);
+    debugSerial.begin(9600);
     EEPROM.begin(512);
 
     // mesh.setDebugMsgTypes( ERROR | MESH_STATUS | CONNECTION | SYNC |
     // COMMUNICATION | GENERAL | MSG_TYPES | REMOTE ); // all types on
     // set before init() so that you can see startup messages
     mesh.setDebugMsgTypes(ERROR | STARTUP);
-    Serial.println("Mesh debug type set");
+    debugSerial.println("Mesh debug type set");
 
     mesh.init(MESH_PREFIX, MESH_PASSWORD, &userScheduler, MESH_PORT);
     mesh.onReceive(&receivedCallback);
     mesh.onNewConnection(&newConnectionCallback);
     mesh.onChangedConnections(&changedConnectionCallback);
     mesh.onNodeTimeAdjusted(&nodeTimeAdjustedCallback);
-    Serial.println("Mesh properties set");
-    Serial.printf("Mesh properties set for ssid -> %s and pass -> %s\n", MESH_PREFIX, MESH_PASSWORD);
+    debugSerial.println("Mesh properties set");
+    debugSerial.printf("Mesh properties set for ssid -> %s and pass -> %s\n", MESH_PREFIX, MESH_PASSWORD);
 
     // Add a task for watching the GPIO pins
     userScheduler.addTask(switch_pin_watcher_task);
     switch_pin_watcher_task.enable();
 
     // Setup GPIO pins
+    //GPIO 1 (TX) swap the pin to a GPIO.
+    pinMode(1, FUNCTION_3); 
+    //GPIO 3 (RX) swap the pin to a GPIO.
+    pinMode(3, FUNCTION_3);
     pinMode(RELAY_PIN, OUTPUT);
+
     pinMode(SWITCH_PIN, INPUT_PULLUP);
     switch_pin_state = digitalRead(SWITCH_PIN);
 
     // Fetch Relay state from storage
     int relay_state_from_storage = 0;
     storage::getRelayStatus(&relay_state_from_storage);
-    Serial.printf("Relay state as per storage -> %d\n", relay_state_from_storage);
-    digitalWrite(RELAY_PIN, relay_state_from_storage);
+    debugSerial.printf("Relay state as per storage -> %d\n", relay_state_from_storage);
+    actuateRelay(relay_state_from_storage);
 
     // Set node name from storage 
     char dev_id[20] = "";
     storage::getDeviceID(dev_id);
-    Serial.printf("Device ID from storage is -> %s\n", dev_id);
+    debugSerial.printf("Device ID from storage is -> %s\n", dev_id);
     String this_node_name(dev_id);
     mesh.setName(this_node_name);
 
 
-    Serial.println("Setup() complete");
+    debugSerial.println("Setup() complete");
 }
 
 void loop() {
