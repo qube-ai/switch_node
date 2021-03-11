@@ -10,6 +10,7 @@
 #define EEPROM_INIT_CHECK_VALUE 139
 
 #define RELAY_STATUS_START 10
+#define PRIORITY_START 15
 #define DEVICE_ID_START 20
 
 namespace storage {
@@ -40,5 +41,8 @@ namespace storage {
     // Getter and Setter for last reset time for energy meter readings
     bool setRelayStatus(int state);
     void getRelayStatus(int *state);
+
+    bool setPriority(int p);
+    void getPriority(int *p);
 
 }  // namespace storage

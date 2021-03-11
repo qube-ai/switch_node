@@ -81,3 +81,14 @@ bool storage::setRelayStatus(int state) {
 void storage::getRelayStatus(int *state) {
     EEPROM.get(RELAY_STATUS_START, *state);
 }
+
+bool storage::setPriority(int p) {
+    EEPROM.put(PRIORITY_START, p);
+    bool a = EEPROM.commit();
+    delay(200);
+    return a;
+}
+
+void storage::getPriority(int *p) {
+    EEPROM.get(PRIORITY_START, *p);
+}
