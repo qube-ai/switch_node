@@ -1,12 +1,10 @@
-# Baby Qube
+# Switch Node
 
 ## TODO
 
   1. Changing Mesh name and password. Otherwise homes that are side by side will share the data automatically. Which is wrong. We need to create unique mesh names and passwords
   2. Ability to change the priority of physical switch or cloud message.
-  3. Add ability to perform an OTA update from master.
-  4. Change GPIO0 to TX and GPIO2 to RX
-  5. Implement software serial on GPIO0 and GPIO2 with preprocessor definitions to remove serial statements from release code. (Create a release build and a debug build).
+  3. Add ability to perform an OTA update from gateway.
 
 ## Getting Started
 
@@ -35,7 +33,7 @@ Rx - GPIO 3
 
 ## Message Types
 
-  - **Type 1 (Node -> Master)** : Whenever the state of node changes. The device generates the message and sends it to the master. Example message:
+  - **Type 1 (Node -> Gateway)** : Whenever the state of node changes. The device generates the message and sends it to the gateway. Example message:
     ```
     {
       "t": 1,   -> 't' stands for type of message
@@ -44,7 +42,7 @@ Rx - GPIO 3
     }
     ```
 
-  - **Type 2 (Master -> Node)** : When master instructs to change the state of relay in a baby qube. Example message
+  - **Type 2 (Gateway -> Node)** : When gateway instructs to change the state of relay in a switch node. Example message
     ```
     {
       "t": 2,   -> 't' stands for type of message
@@ -52,7 +50,7 @@ Rx - GPIO 3
     }
     ```
 
-  - **TODO : Type 3 (Master -> Node)** : Change priority between cloud and physical switch. The priority is as follows:
+  - **TODO : Type 3 (Gateway -> Node)** : Change priority between cloud and physical switch. The priority is as follows:
     - `0` : Follow physical swtich (ignore cloud)
     - `1` : Follow physical switch byut also accept cloud commands
     - `2` : Ignore physical switch but accept cloud commands
