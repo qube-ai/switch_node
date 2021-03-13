@@ -16,7 +16,6 @@
 
 Scheduler userScheduler;
 namedMesh mesh;
-int switch_pin_state = HIGH;
 SoftwareSerial debugSerial(0, 2);  // 0 - Rx, 2 - Tx
 
 inline void actuateRelay(short value) {
@@ -45,17 +44,31 @@ void sendStateMessage() {
     mesh.sendSingle(to_node, doc_string);
 }
 
+enum switch_state {ON = 1, OFF = 0};
+int switch_pin_state = OFF;
+
+enum switch_state getSwitchState() {
+    // Since the input is PULLED_HIGH.
+    // HIGH means Switch is off
+    // LOW means switch is on
+    short t = digitalRead(SWITCH_PIN);
+    if(t == LOW) {
+        return ON;
+    }
+    else {
+        return OFF;
+    }
+}
+
 void switch_pin_watcher() {
     // Get the current state of switch pin
-    int current_state = digitalRead(SWITCH_PIN);
+    int current_state = getSwitchState();
 
     // Compare current state with last known state to see if it has changed
     if (current_state != switch_pin_state) {
-        // Set the relay to whatever state the switch desires
-        // Since the pin is INPUT_PULLUP. So,
-        // Switch OPEN / OFF = HIGH
-        // Switch CLOSE / ON = GND
-        int relay_state = (current_state ? LOW : HIGH);
+        // If the switch is ON(1) then switch on the relay
+        // If the switch is OFF(0) then switch off the relay
+        int relay_state = (current_state ? HIGH : LOW);
         debugSerial.printf("Physical switch says put relay to -> %d\n",
                            relay_state);
         storage::setRelayStatus(relay_state);
@@ -144,7 +157,7 @@ void receivedCallback(uint32_t from, String &msg) {
         if(priority_changed || relay_state_changed) {
             sendStateMessage();
         }
-        
+
     }
 
     else {
