@@ -24,6 +24,27 @@ inline void actuateRelay(short value) {
     digitalWrite(RELAY_PIN, value);
 }
 
+void sendStateMessage() {
+    // Create a message and send it to master
+    StaticJsonDocument<50> doc;
+    String doc_string;
+    String to_node = "master";
+
+    int current_priority = 0;
+    storage::getPriority(&current_priority);
+
+    int current_relay_state = 0;
+    storage::getRelayStatus(&current_relay_state);
+
+    doc["t"] = 1;
+    doc["ss"] = digitalRead(SWITCH_PIN);
+    doc["rs"] = current_relay_state;
+    doc["p"] = current_priority;
+    
+    serializeJson(doc, doc_string);
+    mesh.sendSingle(to_node, doc_string);
+}
+
 void switch_pin_watcher() {
     // Get the current state of switch pin
     int current_state = digitalRead(SWITCH_PIN);
@@ -44,23 +65,17 @@ void switch_pin_watcher() {
         int priority = 0;
         storage::getPriority(&priority);
         if (priority == 0 || priority == 1) {
+            
             actuateRelay(relay_state);
+
+            // Send a state message only when the relay is actuated
+            sendStateMessage();
+
         } else {
             debugSerial.printf(
                 "Current priority(%d) doesn't allow for relay state change.\n",
                 priority);
         }
-
-        // Create a message and send it to master
-        StaticJsonDocument<50> doc;
-        String doc_string;
-        String to_node = "master";
-
-        doc["t"] = 1;
-        doc["ss"] = current_state;
-        doc["rs"] = current_state;
-        serializeJson(doc, doc_string);
-        mesh.sendSingle(to_node, doc_string);
 
         switch_pin_state = current_state;
     }
@@ -88,6 +103,9 @@ void receivedCallback(uint32_t from, String &msg) {
         int required_relay_status = doc["rs"];
         int required_priority = doc["p"];
 
+        bool relay_state_changed = false;
+        bool priority_changed = false;
+
         // Fetch current state of relay
         int current_relay_status = 0;
         storage::getRelayStatus(&current_relay_status);
@@ -103,6 +121,7 @@ void receivedCallback(uint32_t from, String &msg) {
                 actuateRelay(required_relay_status);
                 debugSerial.println(
                     "Relay state was updated due to new config.");
+                relay_state_changed = true;
             }
 
             else {
@@ -118,7 +137,14 @@ void receivedCallback(uint32_t from, String &msg) {
             storage::setPriority(required_priority);
             debugSerial.println(
                 "Device priority was updated due to new config.");
+            priority_changed = true;
         }
+
+        // Check if we require to send a state message
+        if(priority_changed || relay_state_changed) {
+            sendStateMessage();
+        }
+        
     }
 
     else {
