@@ -60,37 +60,6 @@ Changes in configuration will be applied in the following order:
 2. Update the current state of relay
 3. Update the priority of the device
 
-### Old Stuff (to be removed)
-
-  - **Type 1 (Node -> Gateway)** : Whenever the state of node changes. The device generates the message and sends it to the gateway. Example message:
-    ```
-    {
-      "t": 1,   -> 't' stands for type of message
-      "rs": 1,  -> 'rs' stands for relay state (1 - ON, 0 - Off)
-      "ss": 0   -> 'ss' starnds for switch state (1 - ON, 0 - Off)
-    }
-    ```
-
-  - **Type 2 (Gateway -> Node)** : When gateway instructs to change the state of relay in a switch node. Example message
-    ```
-    {
-      "t": 2,   -> 't' stands for type of message
-      "rs": 0,  -> Relay would be set to this state (1 - ON, 0 - Off)
-    }
-    ```
-
-  - **TODO : Type 3 (Gateway -> Node)** : Change priority between cloud and physical switch. The priority is as follows:
-    - `0` : Follow physical swtich (ignore cloud)
-    - `1` : Follow physical switch byut also accept cloud commands
-    - `2` : Ignore physical switch but accept cloud commands
-    - `3` : Ignore physical switch and cloud commands
-   Example message
-    ```
-    {
-      "t": 3,   -> 't' stands for type of message
-      "p": 0,  -> The priority in which the device should exist
-    }
-    ```
 
 ## Iteracting with device
 There are two GPIO pins using which you can interact with the device.
@@ -101,6 +70,12 @@ There are two GPIO pins using which you can interact with the device.
   2. **Switch Input Pin** - Rx (GPIO 3). The physical state of the switch is known by reading this pin.
      - Pin reads HIGH / 5V -> Switch Off
      - Pin reads LOW / 0V / GND -> Switch is On
+
+## Pins used on ESP01
+  - `RXD` -> Switch input pin
+  - `GPIO0` -> Debug serial interface RX pin
+  - `GPIO2` -> Debug serial interface TX pin
+  - `TXD` -> Relay output pin
 
 ## Debugging
 
