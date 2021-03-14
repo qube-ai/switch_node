@@ -3,8 +3,7 @@
 ## TODO
 
   1. Changing Mesh name and password. Otherwise homes that are side by side will share the data automatically. Which is wrong. We need to create unique mesh names and passwords
-  2. Ability to change the priority of physical switch or cloud message.
-  3. Add ability to perform an OTA update from gateway.
+  2. Add ability to perform an OTA update from gateway.
 
 ## Getting Started
 
@@ -63,19 +62,20 @@ Changes in configuration will be applied in the following order:
 
 ## Iteracting with device
 There are two GPIO pins using which you can interact with the device.
-  1. **Relay Output Pin** - TX (GPIO 1). The relay will be driven on the basis of this output.
-     - Pin HIGH / 5V -> Relay ON -> Appliance ON
-     - Pin LOW / 0V -> Relay OFF -> Appliance OFF
+  1. **Relay Output Pin** - GPIO 0. The relay will be driven on the basis of this output.
+     - Pin HIGH / 5V -> Relay OFF -> Appliance OFF
+     - Pin LOW / 0V -> Relay ON -> Appliance ON
+    The reason why the pin is active low is because of the PNP transistor that's present at the output.
 
-  2. **Switch Input Pin** - Rx (GPIO 3). The physical state of the switch is known by reading this pin.
+  2. **Switch Input Pin** - GPIO 2. The physical state of the switch is known by reading this pin.
      - Pin reads HIGH / 5V -> Switch Off
      - Pin reads LOW / 0V / GND -> Switch is On
 
 ## Pins used on ESP01
-  - `RXD` -> Switch input pin
-  - `GPIO0` -> Debug serial interface RX pin
-  - `GPIO2` -> Debug serial interface TX pin
-  - `TXD` -> Relay output pin
+  - `RXD` -> Serial rx pin
+  - `GPIO0` -> Relay output pin
+  - `GPIO2` -> Switch input pin
+  - `TXD` -> Serial tx pin
 
 ## Debugging
 
