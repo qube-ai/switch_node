@@ -20,7 +20,7 @@ SoftwareSerial debugSerial(0, 2);  // 0 - Rx, 2 - Tx
 
 inline void actuateRelay(short value) {
     // Relay is active low
-    digitalWrite(RELAY_PIN, value);
+    digitalWrite(RELAY_PIN, !value);
 }
 
 void sendStateMessage() {
