@@ -25,7 +25,8 @@ inline void actuateRelay(short value) {
 
 void sendStateMessage() {
     // Create a message and send it to master
-    StaticJsonDocument<50> doc;
+    Serial.print("Sending state message...");
+    StaticJsonDocument<65> doc;
     String doc_string;
     String to_node = "master";
 
@@ -42,6 +43,10 @@ void sendStateMessage() {
     
     serializeJson(doc, doc_string);
     mesh.sendSingle(to_node, doc_string);
+    Serial.println("SENT");
+
+    Serial.print("State messages was -> ");
+    Serial.println(doc_string);
 }
 
 enum switch_state {ON = 1, OFF = 0};
