@@ -10,7 +10,7 @@ void setup()
 
     storage::init();
 
-    storage::setDeviceID("switch-node-1");
+    storage::setDeviceID("SW2-30A-1");
     storage::setRelayStatus(0); // By default the appliance would be off
     storage::setPriority(1);    // Follow switch and also listen to cloud messages
 
