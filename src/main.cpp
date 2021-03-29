@@ -18,6 +18,22 @@ Scheduler userScheduler;
 namedMesh mesh;
 // SoftwareSerial debugSerial(0, 2);  // 0 - Rx, 2 - Tx
 
+enum switch_state {ON = 1, OFF = 0};
+int switch_pin_state = OFF;
+
+enum switch_state getSwitchState() {
+    // Since the input is PULLED_HIGH.
+    // HIGH means Switch is off
+    // LOW means switch is on
+    short t = digitalRead(SWITCH_PIN);
+    if(t == LOW) {
+        return ON;
+    }
+    else {
+        return OFF;
+    }
+}
+
 inline void actuateRelay(short value) {
     // Relay is active low
     digitalWrite(RELAY_PIN, !value);
@@ -37,7 +53,7 @@ void sendStateMessage() {
     storage::getRelayStatus(&current_relay_state);
 
     doc["t"] = 1;
-    doc["ss"] = digitalRead(SWITCH_PIN);
+    doc["ss"] = getSwitchState();
     doc["rs"] = current_relay_state;
     doc["p"] = current_priority;
     
@@ -47,22 +63,6 @@ void sendStateMessage() {
 
     Serial.print("State messages was -> ");
     Serial.println(doc_string);
-}
-
-enum switch_state {ON = 1, OFF = 0};
-int switch_pin_state = OFF;
-
-enum switch_state getSwitchState() {
-    // Since the input is PULLED_HIGH.
-    // HIGH means Switch is off
-    // LOW means switch is on
-    short t = digitalRead(SWITCH_PIN);
-    if(t == LOW) {
-        return ON;
-    }
-    else {
-        return OFF;
-    }
 }
 
 void switch_pin_watcher() {
