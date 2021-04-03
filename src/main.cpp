@@ -10,8 +10,8 @@
     //
     #include "storage.h"
 
-    #define MESH_PREFIX "whateverYouLike"
-    #define MESH_PASSWORD "somethingSneaky"
+    #define MESH_PREFIX "qubeMeshNet"
+    #define MESH_PASSWORD "iridiumcoresat12"
     #define MESH_PORT 5555
 
     /* GPIO pins in use */
