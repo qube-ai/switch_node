@@ -17,6 +17,7 @@
     /* GPIO pins in use */
     #define RELAY_PIN 0
     #define SWITCH_PIN 2
+    #define FIRMWARE_VERSION "1.0.0"
 
 Scheduler userScheduler;
 namedMesh mesh;
@@ -45,7 +46,7 @@ inline void actuateRelay(short value) {
 void sendStateMessage() {
     // Create a message and send it to master
     Serial.print("Sending state message...");
-    StaticJsonDocument<65> doc;
+    StaticJsonDocument<120> doc;
     String doc_string;
     String to_node = "master";
 
@@ -59,6 +60,7 @@ void sendStateMessage() {
     doc["ss"] = getSwitchState();
     doc["rs"] = current_relay_state;
     doc["p"] = current_priority;
+    doc["fw"] = FIRMWARE_VERSION;
 
     serializeJson(doc, doc_string);
     mesh.sendSingle(to_node, doc_string);
