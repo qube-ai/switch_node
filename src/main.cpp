@@ -104,6 +104,10 @@ void switch_pin_watcher() {
 // Execute this task every 250ms
 Task switch_pin_watcher_task(250ul, TASK_FOREVER, &switch_pin_watcher);
 
+void heartbeat_signal() { sendStateMessage(); }
+// Send a heartbeat signal every 5 minutes
+Task heartbeat_task(300000ul, TASK_FOREVER, &heartbeat_signal);
+
 void receivedCallback(uint32_t from, String &msg) {
     Serial.printf("Received from %u msg=%s\n", from, msg.c_str());
 
@@ -208,6 +212,9 @@ void setup() {
     // Add a task for watching the GPIO pins
     userScheduler.addTask(switch_pin_watcher_task);
     switch_pin_watcher_task.enable();
+
+    userScheduler.addTask(heartbeat_task);
+    heartbeat_task.enable();
 
     // Fetch Relay state from storage
     int relay_state_from_storage = 0;
