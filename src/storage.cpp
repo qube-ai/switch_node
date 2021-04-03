@@ -2,7 +2,6 @@
 
 storage::AbstractedStorage localStorage;
 
-
 void storage::AbstractedStorage::begin(int size) { EEPROM.begin(size); }
 
 void storage::AbstractedStorage::readString(int address, char *data) {
@@ -89,6 +88,4 @@ bool storage::setPriority(int p) {
     return a;
 }
 
-void storage::getPriority(int *p) {
-    EEPROM.get(PRIORITY_START, *p);
-}
+void storage::getPriority(int *p) { EEPROM.get(PRIORITY_START, *p); }
