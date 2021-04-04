@@ -17,7 +17,7 @@
     /* GPIO pins in use */
     #define RELAY_PIN 0
     #define SWITCH_PIN 2
-    #define FIRMWARE_VERSION "1.0.0"
+String FIRMWARE_VERSION = "SW2-30A_1.0.0";
 
 Scheduler userScheduler;
 namedMesh mesh;
@@ -106,7 +106,7 @@ Task switch_pin_watcher_task(250ul, TASK_FOREVER, &switch_pin_watcher);
 
 void heartbeat_signal() { sendStateMessage(); }
 // Send a heartbeat signal every 5 minutes
-Task heartbeat_task(300000ul, TASK_FOREVER, &heartbeat_signal);
+Task heartbeat_task(120000ul, TASK_FOREVER, &heartbeat_signal);
 
 void receivedCallback(uint32_t from, String &msg) {
     Serial.printf("Received from %u msg=%s\n", from, msg.c_str());
