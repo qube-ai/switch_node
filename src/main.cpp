@@ -46,7 +46,7 @@ inline void actuateRelay(short value) {
 void sendStateMessage() {
     // Create a message and send it to master
     Serial.print("Sending state message...");
-    StaticJsonDocument<120> doc;
+    StaticJsonDocument<128> doc;
     String doc_string;
     String to_node = "master";
 
